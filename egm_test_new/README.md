@@ -47,18 +47,21 @@ make clean
 ### 基本用法
 
 ```bash
-# 运行默认测试 (256MB, 100 iterations)
+# 运行默认测试 (1GB, 50 iterations)
 ./egm_bandwidth_test
 
 # 自定义参数
-./egm_bandwidth_test -s 512 -i 200 -d 0
+./egm_bandwidth_test -s 2048 -i 30 -d 0
+
+# 快速测试
+./egm_bandwidth_test -s 256 -i 50
 ```
 
 ### 参数说明
 
 ```
--s, --size <MB>       测试缓冲区大小（MB），默认: 256
--i, --iterations <N>  迭代次数，默认: 100
+-s, --size <MB>       测试缓冲区大小（MB），默认: 1024 (1GB)
+-i, --iterations <N>  迭代次数，默认: 50
 -d, --device <ID>     GPU 设备 ID，默认: 0
 -h, --help            显示帮助信息
 ```
@@ -66,14 +69,20 @@ make clean
 ### 使用示例
 
 ```bash
-# 小规模快速测试
-./egm_bandwidth_test -s 64 -i 50
+# 快速验证（~10秒）
+./egm_bandwidth_test -s 256 -i 30
 
-# 大规模测试
-./egm_bandwidth_test -s 1024 -i 200
+# 标准测试（推荐，默认 1GB）
+./egm_bandwidth_test
+
+# 大规模 EGM 测试
+./egm_bandwidth_test -s 4096 -i 20
+
+# 完整性能曲线
+./test_bandwidth_sweep.sh
 
 # 指定 GPU
-./egm_bandwidth_test -d 1 -s 512 -i 100
+./egm_bandwidth_test -d 1 -s 1024 -i 50
 ```
 
 ## 预期输出

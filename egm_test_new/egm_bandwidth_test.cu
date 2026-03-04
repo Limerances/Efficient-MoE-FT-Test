@@ -30,19 +30,22 @@
 
 #define ROUND_UP(x, y) (((x) + (y) - 1) / (y) * (y))
 
-constexpr size_t DEFAULT_SIZE = 256 * 1024 * 1024;
-constexpr int DEFAULT_ITERATIONS = 100;
+constexpr size_t DEFAULT_SIZE = 1024 * 1024 * 1024;
+constexpr int DEFAULT_ITERATIONS = 50;
 constexpr int WARMUP_ITERATIONS = 10;
 
 __global__ void memcpy_kernel_read(const float* __restrict__ src, float* __restrict__ dst, size_t n) {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
     size_t stride = blockDim.x * gridDim.x;
     float sum = 0.0f;
+    
     for (size_t i = idx; i < n; i += stride) {
-        sum += src[i];
+        float val = src[i];
+        sum += val;
     }
-    if (idx == 0) {
-        dst[0] = sum;
+    
+    if (threadIdx.x == 0) {
+        atomicAdd(dst, sum);
     }
 }
 
@@ -297,11 +300,16 @@ BenchmarkResult runBenchmark(MemoryBenchmark* bench, size_t size, int iterations
     
     void* d_temp;
     CUDA_CHECK(cudaMalloc(&d_temp, sizeof(float)));
+    CUDA_CHECK(cudaMemset(d_temp, 0, sizeof(float)));
     
     void* d_src_hbm;
     void* d_dst_hbm;
     CUDA_CHECK(cudaMalloc(&d_src_hbm, size));
     CUDA_CHECK(cudaMalloc(&d_dst_hbm, size));
+    
+    CUDA_CHECK(cudaMemset(ptr, 1, size));
+    CUDA_CHECK(cudaMemset(d_src_hbm, 1, size));
+    CUDA_CHECK(cudaDeviceSynchronize());
     
     int blockSize = 256;
     int numBlocks = std::min((int)((n + blockSize - 1) / blockSize), 65535);
