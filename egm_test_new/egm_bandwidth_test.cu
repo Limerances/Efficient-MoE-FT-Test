@@ -448,10 +448,19 @@ void printDeviceInfo(int deviceId) {
     printf("Device Name: %s\n", prop.name);
     printf("Compute Capability: %d.%d\n", prop.major, prop.minor);
     printf("Total Global Memory: %.2f GB\n", prop.totalGlobalMem / 1e9);
+    
+#if CUDART_VERSION < 12000
     printf("Memory Clock Rate: %.2f GHz\n", prop.memoryClockRate / 1e6);
     printf("Memory Bus Width: %d bits\n", prop.memoryBusWidth);
     printf("Peak Memory Bandwidth: %.2f GB/s\n", 
            2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1e6);
+#else
+    size_t memBandwidth = 0;
+    cudaDeviceGetAttribute((int*)&memBandwidth, cudaDevAttrMemoryBusWidth, deviceId);
+    if (memBandwidth > 0) {
+        printf("Memory Bus Width: %zu bits\n", memBandwidth);
+    }
+#endif
     
     int numaId = -1;
     cudaDeviceGetAttribute(&numaId, cudaDevAttrHostNumaId, deviceId);
